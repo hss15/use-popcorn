@@ -13,18 +13,30 @@ export default function App() {
   const [isOpen2, setIsOpen2] = useState(true);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(function () {
     async function fetchMovies() {
-      setIsLoading(true);
+      try {
+        setIsLoading(true);
 
-      const res = await fetch(
-        `http://www.omdbapi.com/?i=tt3896198&apikey=${KEY}&s=harry`
-      );
-      const data = await res.json();
+        const res = await fetch(
+          `http://www.omdbapi.com/?i=tt3896198&apikey=${KEY}&s=harry`
+        );
 
-      setMovies(data.Search);
-      setIsLoading(false);
+        if (!res.ok) {
+          throw new Error("Error while fetching the data");
+        }
+
+        const data = await res.json();
+
+        setMovies(data.Search);
+      } catch (err) {
+        console.log(err.message);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
     }
 
     fetchMovies();
@@ -39,7 +51,13 @@ export default function App() {
       {NavBar(query, setQuery, movies)}
 
       <main className="main">
-        {isLoading ? Loader() : Box(setIsOpen1, isOpen1, movies)}
+        {isLoading ? (
+          Loader()
+        ) : error.length !== 0 ? (
+          <ErrorMessage message={error} />
+        ) : (
+          Box(setIsOpen1, isOpen1, movies)
+        )}
 
         <div className="box">
           <button
@@ -134,6 +152,14 @@ function Box(setIsOpen1, isOpen1, movies) {
 function Loader() {
   console.log("Loading");
   return <p className="loader">Loading...</p>;
+}
+
+function ErrorMessage({ message }) {
+  return (
+    <p className="error">
+      <span>{message} Moye-Moye</span>
+    </p>
+  );
 }
 
 function NavBar(query, setQuery, movies) {
