@@ -6,7 +6,7 @@ const average = (arr) =>
 const KEY = "213c6202";
 
 export default function App() {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState("fhkjsdhfjksdhfkjshdf");
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState([]);
   const [isOpen1, setIsOpen1] = useState(true);
@@ -21,14 +21,16 @@ export default function App() {
         setIsLoading(true);
 
         const res = await fetch(
-          `http://www.omdbapi.com/?i=tt3896198&apikey=${KEY}&s=harry`
+          `http://www.omdbapi.com/?i=tt3896198&apikey=${KEY}&s=${query}`
         );
-
         if (!res.ok) {
-          throw new Error("Error while fetching the data");
+          throw new Error("Error while fetching the movies.");
         }
 
         const data = await res.json();
+        if (data.Response === "False") {
+          throw new Error("Movie not found.");
+        }
 
         setMovies(data.Search);
       } catch (err) {
