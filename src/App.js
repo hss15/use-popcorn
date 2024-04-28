@@ -6,7 +6,7 @@ const average = (arr) =>
 const KEY = "213c6202";
 
 export default function App() {
-  const [query, setQuery] = useState("fhkjsdhfjksdhfkjshdf");
+  const [query, setQuery] = useState("");
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState([]);
   const [isOpen1, setIsOpen1] = useState(true);
@@ -15,34 +15,41 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(function () {
-    async function fetchMovies() {
-      try {
-        setIsLoading(true);
+  useEffect(
+    function () {
+      async function fetchMovies() {
+        try {
+          setIsLoading(true);
+          setError("");
 
-        const res = await fetch(
-          `http://www.omdbapi.com/?i=tt3896198&apikey=${KEY}&s=${query}`
-        );
-        if (!res.ok) {
-          throw new Error("Error while fetching the movies.");
+          const res = await fetch(
+            `http://www.omdbapi.com/?i=tt3896198&apikey=${KEY}&s=${query}`
+          );
+          if (!res.ok) {
+            throw new Error("Error while fetching the movies.");
+          }
+
+          const data = await res.json();
+          if (data.Response === "False") {
+            throw new Error("Movie not found.");
+          }
+
+          setMovies(data.Search);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setIsLoading(false);
         }
-
-        const data = await res.json();
-        if (data.Response === "False") {
-          throw new Error("Movie not found.");
-        }
-
-        setMovies(data.Search);
-      } catch (err) {
-        console.log(err.message);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
       }
-    }
 
-    fetchMovies();
-  }, []);
+      if (query.length < 3) {
+        return;
+      }
+
+      fetchMovies();
+    },
+    [query]
+  );
 
   const avgImdbRating = average(watched.map((movie) => movie.imdbRating));
   const avgUserRating = average(watched.map((movie) => movie.userRating));
@@ -50,15 +57,14 @@ export default function App() {
 
   return (
     <>
-      {NavBar(query, setQuery, movies)}
-
+      <NavBar query={query} setQuery={setQuery} movies={movies} />
       <main className="main">
         {isLoading ? (
           Loader()
         ) : error.length !== 0 ? (
           <ErrorMessage message={error} />
         ) : (
-          Box(setIsOpen1, isOpen1, movies)
+          <Box setIsOpen1={setIsOpen1} isOpen1={isOpen1} movies={movies} />
         )}
 
         <div className="box">
@@ -122,7 +128,7 @@ export default function App() {
   );
 }
 
-function Box(setIsOpen1, isOpen1, movies) {
+function Box({ setIsOpen1, isOpen1, movies }) {
   return (
     <div className="box">
       <button
@@ -164,7 +170,7 @@ function ErrorMessage({ message }) {
   );
 }
 
-function NavBar(query, setQuery, movies) {
+function NavBar({ query, setQuery, movies }) {
   return (
     <nav className="nav-bar">
       <div className="logo">
@@ -179,7 +185,7 @@ function NavBar(query, setQuery, movies) {
         onChange={(e) => setQuery(e.target.value)}
       />
       <p className="num-results">
-        Found <strong>{movies.length}</strong> results
+        Found <strong>{movies ? movies.length : 0}</strong> results
       </p>
     </nav>
   );
