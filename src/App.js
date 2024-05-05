@@ -14,6 +14,15 @@ export default function App() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [selectedId, setSelectedId] = useState(null);
+
+  function handleSelectMovie(id) {
+    setSelectedId(selectedId === id ? null : id);
+  }
+
+  function handleCloseMovie() {
+    setSelectedId(null);
+  }
 
   useEffect(
     function () {
@@ -64,7 +73,12 @@ export default function App() {
         ) : error.length !== 0 ? (
           <ErrorMessage message={error} />
         ) : (
-          <Box setIsOpen1={setIsOpen1} isOpen1={isOpen1} movies={movies} />
+          <Box
+            setIsOpen1={setIsOpen1}
+            isOpen1={isOpen1}
+            movies={movies}
+            onSelectMovie={handleSelectMovie}
+          />
         )}
 
         <div className="box">
@@ -76,50 +90,23 @@ export default function App() {
           </button>
           {isOpen2 && (
             <>
-              <div className="summary">
-                <h2>Movies you watched</h2>
-                <div>
-                  <p>
-                    <span>#️⃣</span>
-                    <span>{watched.length} movies</span>
-                  </p>
-                  <p>
-                    <span>⭐️</span>
-                    <span>{avgImdbRating}</span>
-                  </p>
-                  <p>
-                    <span>🌟</span>
-                    <span>{avgUserRating}</span>
-                  </p>
-                  <p>
-                    <span>⏳</span>
-                    <span>{avgRuntime} min</span>
-                  </p>
-                </div>
-              </div>
+              {selectedId ? (
+                <MovieDetails
+                  selectedId={selectedId}
+                  onCloseMovie={handleCloseMovie}
+                />
+              ) : (
+                <>
+                  {WatchedSummary(
+                    watched,
+                    avgImdbRating,
+                    avgUserRating,
+                    avgRuntime
+                  )}
 
-              <ul className="list">
-                {watched.map((movie) => (
-                  <li key={movie.imdbID}>
-                    <img src={movie.Poster} alt={`${movie.Title} poster`} />
-                    <h3>{movie.Title}</h3>
-                    <div>
-                      <p>
-                        <span>⭐️</span>
-                        <span>{movie.imdbRating}</span>
-                      </p>
-                      <p>
-                        <span>🌟</span>
-                        <span>{movie.userRating}</span>
-                      </p>
-                      <p>
-                        <span>⏳</span>
-                        <span>{movie.runtime} min</span>
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                  {WatchedMovieList(watched)}
+                </>
+              )}
             </>
           )}
         </div>
@@ -128,7 +115,60 @@ export default function App() {
   );
 }
 
-function Box({ setIsOpen1, isOpen1, movies }) {
+function WatchedMovieList(watched) {
+  return (
+    <ul className="list">
+      {watched.map((movie) => (
+        <li key={movie.imdbID}>
+          <img src={movie.Poster} alt={`${movie.Title} poster`} />
+          <h3>{movie.Title}</h3>
+          <div>
+            <p>
+              <span>⭐️</span>
+              <span>{movie.imdbRating}</span>
+            </p>
+            <p>
+              <span>🌟</span>
+              <span>{movie.userRating}</span>
+            </p>
+            <p>
+              <span>⏳</span>
+              <span>{movie.runtime} min</span>
+            </p>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function WatchedSummary(watched, avgImdbRating, avgUserRating, avgRuntime) {
+  return (
+    <div className="summary">
+      <h2>Movies you watched</h2>
+      <div>
+        <p>
+          <span>#️⃣</span>
+          <span>{watched.length} movies</span>
+        </p>
+        <p>
+          <span>⭐️</span>
+          <span>{avgImdbRating}</span>
+        </p>
+        <p>
+          <span>🌟</span>
+          <span>{avgUserRating}</span>
+        </p>
+        <p>
+          <span>⏳</span>
+          <span>{avgRuntime} min</span>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function Box({ setIsOpen1, isOpen1, movies, onSelectMovie }) {
   return (
     <div className="box">
       <button
@@ -138,22 +178,28 @@ function Box({ setIsOpen1, isOpen1, movies }) {
         {isOpen1 ? "–" : "+"}
       </button>
       {isOpen1 && (
-        <ul className="list">
+        <ul className="list list-movies">
           {movies?.map((movie) => (
-            <li key={movie.imdbID}>
-              <img src={movie.Poster} alt={`${movie.Title} poster`} />
-              <h3>{movie.Title}</h3>
-              <div>
-                <p>
-                  <span>🗓</span>
-                  <span>{movie.Year}</span>
-                </p>
-              </div>
-            </li>
+            <Movie movie={movie} onSelectMovie={onSelectMovie} />
           ))}
         </ul>
       )}
     </div>
+  );
+}
+
+function Movie({ movie, onSelectMovie }) {
+  return (
+    <li key={movie.imdbID} onClick={() => onSelectMovie(movie.imdbID)}>
+      <img src={movie.Poster} alt={`${movie.Title} poster`} />
+      <h3>{movie.Title}</h3>
+      <div>
+        <p>
+          <span>🗓</span>
+          <span>{movie.Year}</span>
+        </p>
+      </div>
+    </li>
   );
 }
 
@@ -188,5 +234,16 @@ function NavBar({ query, setQuery, movies }) {
         Found <strong>{movies ? movies.length : 0}</strong> results
       </p>
     </nav>
+  );
+}
+
+function MovieDetails({ selectedId, onCloseMovie }) {
+  return (
+    <div className="details">
+      <button className="btn-back" onClick={() => onCloseMovie()}>
+        &larr;
+      </button>
+      {selectedId}
+    </div>
   );
 }
